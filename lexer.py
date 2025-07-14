@@ -8,6 +8,10 @@ class Lexer:
         self.pos = -1
         self.token = None
 
+    def eat(self, token):
+        assert self.token.name == token
+        self.next_token()
+
     # consumes white space while the next token is a whitespace character (SPACE)
     def eat_spaces(self):
         while (self.token.name == SPACE):
@@ -41,5 +45,4 @@ class Lexer:
                     self.token = Token(MULOP, "/")
                 case _:
                     raise Exception("illegal symbol encountered:", curr_char)
-        print(self.token)
         return self.token
