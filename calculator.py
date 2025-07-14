@@ -6,7 +6,7 @@ expr := factor | (expr) | expr mulop expr | expr addop expr
 mulop := * | /
 addop := + | -
 factor := integer
-'''
+''' 
 
 '''class Token represents a token and contains its __str__ function. There are seven types of tokens that are recognized by the program: single-digit integers, mulops (* or /), addops (+ or -), spaces, oparens ("("), cparens(")"), and the end of file.'''
 class Token:
