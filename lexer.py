@@ -8,18 +8,14 @@ class Lexer:
         self.pos = -1
         self.token = None
 
+    #checks if the next token is the expected type, then consumes that token
     def eat(self, token):
         assert self.token.name == token
         self.next_token()
 
-    # consumes white space while the next token is a whitespace character (SPACE)
-    def eat_spaces(self):
-        while (self.token.name == SPACE):
-            self.eat(SPACE)
-
     #advances the parser to the next token in the expression and returns the next token, if valid
     #throws exception if next token is not recognized
-    def next_token(self):
+    def next_token(self, skip_spaces=True):
         self.pos += 1
         if self.pos >= len(self.expr):
             self.token = Token(EOF, None)
@@ -30,7 +26,7 @@ class Lexer:
         else: 
             match curr_char:
                 case " ":
-                    self.token = self.next_token()
+                    self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
                 case "(":
                     self.token = Token(OPAREN, "(")
                 case ")":
@@ -43,6 +39,10 @@ class Lexer:
                     self.token = Token(MULOP, "*")
                 case "/":
                     self.token = Token(MULOP, "/")
+                case ".":
+                    self.token = Token(PERIOD, ".")
+                case "^":
+                    self.token = Token(CARET, "^")
                 case _:
                     raise Exception("illegal symbol encountered:", curr_char)
         return self.token
