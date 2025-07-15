@@ -30,13 +30,11 @@ class Interpreter:
             self.lexer.eat(OPAREN)
             num1 = self.eval_expr()
             self.lexer.eat(CPAREN)
-            print("token:", self.lexer.token)
         elif self.lexer.token.name in (INTEGER, PERIOD):
             num1 = self.eval_number()
         while self.lexer.token.name == CARET:
             self.lexer.eat(CARET)
             num1 = num1 ** self.eval_factor()
-        print("eval factor", num1)
         return num1
 
     # evaluates the rule for a number
@@ -45,7 +43,6 @@ class Interpreter:
         period, decimal, num = 0, False, 0
         assert self.lexer.token.name in (INTEGER, PERIOD)
         while self.lexer.token.name in (INTEGER, PERIOD):
-            print(self.lexer.token)
             if self.lexer.token.name == PERIOD:
                 if decimal:
                     raise Exception ("number with too many decimal places")
@@ -57,7 +54,6 @@ class Interpreter:
             self.lexer.next_token(False)
         if self.lexer.token.name == SPACE:
             self.lexer.next_token()
-        print("eval number", num)
         return int(num) if period == 0 else num
     
     # evaluates the rule for terms
@@ -73,10 +69,13 @@ class Interpreter:
                 case "*":
                     num1 = num1 * self.eval_term()
                 case "/":
-                    num1 = num1 / self.eval_term()
+                    if self.lexer.token.symbol == "/":
+                        self.lexer.eat(MULOP)
+                        num1 = num1 // self.eval_term()
+                    else:
+                        num1 = num1 / self.eval_term()
                 case _:
                     raise Exception("illegal mulop argument")
-        print("eval term", num1, self.lexer.token.name)
         return num1
     
     # evaluates the rule for expressions
@@ -97,6 +96,5 @@ class Interpreter:
                     num1 -= self.eval_expr()
                 case _:
                     raise Exception("illegal operation passed")
-        print("eval expr", num1)
         return num1
 
