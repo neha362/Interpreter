@@ -2,11 +2,11 @@ from tokens import *
 from lexer import Lexer
 '''
 BNF: 
-expr := (expr) | term (ADDOP expr)*
-term := factor | (expr) | factor (MULOP term)*
+expr := term (ADDOP expr)*
+term := factor (MULOP term)*
 mulop := * | /
 addop := + | -
-factor := number | (expr) | number (^ factor)*
+factor := (expr) | number (^ factor)*
 number := INTEGER* | INTEGER* PERIOD INTEGER
 ''' 
 
