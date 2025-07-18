@@ -21,7 +21,7 @@ class AST_Node():
         self.op = op
 
     def invariant(self):
-        return not (self.left == None or self.right == None or self.op == None)
+        return not (self.left == None and self.right == None)
 
     @abstractmethod
     def interpret(self):
@@ -29,11 +29,13 @@ class AST_Node():
 
 #class Expr extends the AST Node and implements the interpret method according to the BNF
 class Expr(AST_Node):
-    def __init__(self, left, right):
-        AST_Node.__init__(self, left, right, CARET)
+    def __init__(self, left, right, op):
+        if op.name != ADDOP:
+            raise Exception("illegal add node")
+        AST_Node.__init__(self, left, right, op)
 
     def invariant(self):
-        return AST_Node.invariant(self) and isinstance(self.left, Expr) and isinstance(self.right, Expr)
+        return AST_Node.invariant(self) and isinstance(self.left, Expr) and isinstance(self.right, Expr) and self.op.name == ADDOP
 
     def interpret(self):
         if not self.invariant():
@@ -43,10 +45,28 @@ class Expr(AST_Node):
 #class Term extends the Expr Node and implements the interpret method according to the BNF
 class Term(Expr):
     def __init__(self, left, right, op):
-        if op.type != MULOP:
+        if op.name != MULOP:
             raise Exception("illegal term node")
+        AST_Node.__init__(self, left, right, op)
     
     def invariant(self):
-        return Expr.invariant(self) and isinstance(self.left, Term) and isinstance(self.right, Term) and self.op.name == MULOP
+        return AST_Node.invariant(self) and isinstance(self.left, Term) and isinstance(self.right, Term) and self.op.name == MULOP
     
         
+# class Factor extends the Term Node and implements the interpret method according to the BNF
+class Factor(Term):
+    def __init__(self, left, right, op):
+        if op.name != CARET:
+            raise Exception("illegal factor node")
+        AST_Node.__init__(self, left, right, op)
+
+    def invariant(self):
+        if self.right == None:
+            return isinstance(self.left, Expr)
+        return self.left != None and self.op != None and isinstance(self.left, Term) and isinstance(self.right, Term)
+    
+# class Number extends the Factor node and implements the interpret method according to the BNF rule
+class Number(Term):
+    def __init__(self, left, right):
+        if self.left == None or self.left:
+            raise Exception("illegal number node")
