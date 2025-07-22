@@ -1,5 +1,6 @@
 from tokens import *
 from as_tree import *
+from lexer import *
 '''
 BNF: 
 expr := term (ADDOP term)*
@@ -12,10 +13,11 @@ number := INTEGER* | INTEGER* PERIOD INTEGER
 class Parser:
     def __init__(self, expr):
         self.lexer = Lexer(expr)
+        self.tree = None
     
     #begins the interpretation process and returns the evaluated value, if the expression is valid
     def build(self):
-        self.build_expr()
+        self.tree = self.build_expr()
     # checks whether the next token is the same type as the expected token and advances the parser to the next token
     
     # builds a factor node
@@ -29,8 +31,9 @@ class Parser:
         elif self.lexer.token.name in (INTEGER, PERIOD):
             node1 = self.build_number()
         while self.lexer.token.name == CARET:
+            op = self.lexer.token
             self.lexer.eat(CARET)
-            node1 = Factor(node1, self.build_factor(), CARET)
+            node1 = Factor(node1, self.build_factor(), op)
         return node1
 
     # builds a number node
@@ -60,9 +63,9 @@ class Parser:
             self.lexer.eat(MULOP)
             match op.symbol:
                 case "*":
-                    node = Term(node, self.build_factor(), op)
-                case _:
                     node = Term(self.build_factor(), node, op)
+                case _:
+                    node = Term(node, self.build_factor(), op)
         return node
     
     # evaluates the rule for expressions
@@ -78,8 +81,8 @@ class Parser:
             self.lexer.eat(ADDOP)
             match op.symbol:
                 case "+":
-                    node = Expr(node, self.build_term(), op)
+                    node = Expr(self.build_term(), node, op)
                 case _:
-                    node -= Expr(self.build_term(), node, op)
+                    node = Expr(node, self.build_term(), op)
         return node
 

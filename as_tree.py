@@ -19,6 +19,7 @@ class AST_Node():
         self.left = left
         self.right = right
         self.op = op
+        print(self.to_string(0))
 
     @abstractmethod
     def invariant(self):
@@ -31,11 +32,11 @@ class AST_Node():
     def to_string(self, tabs):
         string = ""
         for _ in range(tabs):
-            string += "/t"
-        string += type(self).__name__ + ", op = " + ("" if self.op != None else self.op.symbol) + "/n"
-        string += "\n|->" + self.left.to_string(tabs + 1)
+            string += "\t"
+        string += "|-> " + type(self).__name__ + ", op = " + ("" if self.op == None else self.op.symbol)
+        string += "\n" + self.left.to_string(tabs + 1)
         if self.right != None:
-            string += "\n|->" + self.right.to_string(tabs + 1)
+            string += "\n" + self.right.to_string(tabs + 1)
         return string
 
 
@@ -48,7 +49,7 @@ class Expr(AST_Node):
 
     # the left child node must be an Expr and the right node -- if not None -- must also be an Expr
     def invariant(self):
-        return isinstance(self.left, Term) and (self.right == None or isinstance(self.right, Expr) and self.op.name == ADDOP)
+        return (self.right == None or self.op.name == ADDOP)
 
     #interprets according to the Expr rule (expr := term (ADDOP expr)*)
     def interpret(self):
@@ -61,7 +62,7 @@ class Expr(AST_Node):
         return self.left.interpret() - self.right.interpret()
 
 #class Term extends the Expr Node and implements the interpret method according to the BNF
-class Term(AST_Node):
+class Term(Expr):
     def __init__(self, left, right, op):
         if right != None and op.name != MULOP or right == None and op != None:
             raise Exception("illegal term node")
@@ -69,7 +70,7 @@ class Term(AST_Node):
     
     # the left node must be of type Term and the right node -- if not None -- must also be of type Term
     def invariant(self):
-        return isinstance(self.left, Factor) and (self.right == None or isinstance(self.right, Term) and self.op.name == MULOP)
+        return (self.right == None or self.op.name == MULOP)
     
     #interpets the node according to the BNF rule for terms (term := factor (MULOP term)*)
     def interpret(self):
@@ -82,7 +83,7 @@ class Term(AST_Node):
         return self.left.interpret() / self.right.interpret()
 
 # class Factor extends the Term Node and implements the interpret method according to the BNF
-class Factor(AST_Node):
+class Factor(Expr):
     def __init__(self, left, right, op):
         if op.name != CARET:
             raise Exception("illegal factor node")
@@ -101,7 +102,7 @@ class Factor(AST_Node):
         return self.left.interpret() ** self.right.interpret()
     
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
-class Number(AST_Node):
+class Number(Factor):
     def __init__(self, values):
         self.values = values
     
@@ -110,19 +111,20 @@ class Number(AST_Node):
         for i in self.values:
             if not i.name == INTEGER or i.name == PERIOD:
                 return False
-        return len(filter(lambda x: x.name == PERIOD, self.values)) > 1
+        return len([x for x in self.values if x.name == PERIOD]) <= 1
 
     def interpret(self):
         if not self.invariant():
             raise Exception("illegal number node")
         num, decimal = 0, False
+        period = 0
         for i in self.values:
             if i.name == PERIOD:
                 if decimal:
                     raise Exception("number with too many decimal places")
                 decimal = True
                 continue
-            if i.name == INTEGER:
+            if i.name == INTEGER and decimal:
                 period += 1
             num = (10 if period == 0 else 1) * num + i.symbol / (10 ** period)
         return num
@@ -130,7 +132,5 @@ class Number(AST_Node):
     def to_string(self, tabs):
         string = ""
         for _ in range(tabs):
-            string += "/t"
-        string += type(self).__name__ + "/n"
-        string += "\n|->" + [i.symbol for i in self.values]
-        return string
+            string += "\t"
+        return string + "|-> " + type(self).__name__ + ", " + str([i.symbol for i in self.values])
