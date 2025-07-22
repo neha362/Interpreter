@@ -28,6 +28,17 @@ class AST_Node():
     def interpret(self):
         pass
 
+    def to_string(self, tabs):
+        string = ""
+        for _ in range(tabs):
+            string += "/t"
+        string += type(self).__name__ + ", op = " + ("" if self.op != None else self.op.symbol) + "/n"
+        string += "\n|->" + self.left.to_string(tabs + 1)
+        if self.right != None:
+            string += "\n|->" + self.right.to_string(tabs + 1)
+        return string
+
+
 #class Expr extends the AST Node and implements the interpret method according to the BNF
 class Expr(AST_Node):
     def __init__(self, left, right, op):
@@ -87,7 +98,7 @@ class Factor(AST_Node):
     def interpret(self):
         if self.op == None:
             return self.left.interpret()
-        return self.left.interpret() ** self.right.interopret()
+        return self.left.interpret() ** self.right.interpret()
     
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
 class Number(AST_Node):
@@ -115,3 +126,11 @@ class Number(AST_Node):
                 period += 1
             num = (10 if period == 0 else 1) * num + i.symbol / (10 ** period)
         return num
+
+    def to_string(self, tabs):
+        string = ""
+        for _ in range(tabs):
+            string += "/t"
+        string += type(self).__name__ + "/n"
+        string += "\n|->" + [i.symbol for i in self.values]
+        return string
