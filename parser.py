@@ -5,10 +5,10 @@ from lexer import *
 BNF: 
 expr := term (ADDOP term)*
 term := factor (MULOP factor)*
-mulop := * | /
+mulop := * | / | OPAREN
 addop := + | -
 factor := (expr) | number (^ factor)*
-number := INTEGER* | INTEGER* PERIOD INTEGER
+number :=  ADDOP? INTEGER* (PERIOD INTEGER*)?
 ''' 
 class Parser:
     def __init__(self, expr):
@@ -28,7 +28,7 @@ class Parser:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
             self.lexer.eat(CPAREN)
-        elif self.lexer.token.name in (INTEGER, PERIOD):
+        elif self.lexer.token.name in (INTEGER, PERIOD, ADDOP):
             node1 = self.build_number()
         while self.lexer.token.name == CARET:
             op = self.lexer.token
@@ -40,7 +40,12 @@ class Parser:
     # number := INTEGER* | INTEGER* PERIOD INTEGER
     def build_number(self):
         decimal, num = False, []
-        assert self.lexer.token.name in (INTEGER, PERIOD)
+        assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP)
+        if self.lexer.token.name == ADDOP:
+            assert self.lexer.token.symbol == "-"
+            token = self.lexer.token
+            self.lexer.eat(ADDOP)
+            return Expr(Number([Token(INTEGER, 0)]), self.build_number(), token)
         while self.lexer.token.name in (INTEGER, PERIOD):
             if self.lexer.token.name == PERIOD:
                 if decimal:
@@ -56,14 +61,17 @@ class Parser:
     # term := factor (MULOP factor)*
     # MULOP := * | /
     def build_term(self):
-        assert self.lexer.token.name in (EOF, INTEGER, OPAREN, PERIOD) 
+        assert self.lexer.token.name in (EOF, INTEGER, OPAREN, PERIOD, ADDOP) 
         node = self.build_factor()
-        while self.lexer.token.name == MULOP:
+        while self.lexer.token.name in (MULOP, OPAREN) :
             op = self.lexer.token
-            self.lexer.eat(MULOP)
+            self.lexer.eat(op.name)
             match op.symbol:
                 case "*":
                     node = Term(self.build_factor(), node, op)
+                case "(":
+                    node = Term(self.build_expr(), node, Token(MULOP, "*"))
+                    self.lexer.eat(CPAREN)
                 case _:
                     node = Term(node, self.build_factor(), op)
         return node
@@ -76,7 +84,7 @@ class Parser:
         token = self.lexer.token.name
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
-            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET))
+            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN))
             op = self.lexer.token
             self.lexer.eat(ADDOP)
             match op.symbol:

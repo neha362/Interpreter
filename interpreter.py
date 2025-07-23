@@ -9,7 +9,7 @@ term := factor (MULOP term)*
 mulop := * | /
 addop := + | -
 factor := (expr) | number (^ factor)*
-number := INTEGER* | INTEGER* PERIOD INTEGER
+number :=  ADDOP? INTEGER* (PERIOD INTEGER*)?
 ''' 
 
 '''class Interpreter parses an expression and evaluates the sentence based on the BNF form of the expression. '''
