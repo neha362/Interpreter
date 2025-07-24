@@ -18,7 +18,7 @@ class Parser:
     #begins the interpretation process and returns the evaluated value, if the expression is valid
     def build(self):
         self.tree = self.build_expr()
-        assert(self.lexer.token.name == EOF)
+        assert(self.lexer.token.name == EOF), "additional characters after expression " + self.lexer.token
     # checks whether the next token is the same type as the expected token and advances the parser to the next token
     
     # builds a factor node
@@ -41,11 +41,14 @@ class Parser:
     # number := INTEGER* | INTEGER* PERIOD INTEGER
     def build_number(self):
         decimal, num, neg = False, [], False
-        assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP)
+        assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP), "number identified but incorrect token " + self.lexer.token
         if self.lexer.token.name == ADDOP:
-            assert self.lexer.token.symbol == "-"
+            assert self.lexer.token.symbol == "-", "expected negative value but plus found instead"
             neg = True
             self.lexer.eat(ADDOP)
+            x = self.build_number()
+            x.neg = not x.neg
+            return x
         while self.lexer.token.name in (INTEGER, PERIOD):
             if self.lexer.token.name == PERIOD:
                 if decimal:
@@ -61,7 +64,7 @@ class Parser:
     # term := factor (MULOP factor)*
     # MULOP := * | /
     def build_term(self):
-        assert self.lexer.token.name in (EOF, INTEGER, OPAREN, PERIOD, ADDOP) 
+        assert self.lexer.token.name in (EOF, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token
         node = self.build_factor()
         while self.lexer.token.name in (MULOP, OPAREN) :
             op = self.lexer.token
@@ -94,7 +97,7 @@ class Parser:
         token = self.lexer.token.name
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
-            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN))
+            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN)), "tried to build expr but token unexpected " + self.lexer.token
             op = self.lexer.token
             self.lexer.eat(ADDOP)
             match op.symbol:
