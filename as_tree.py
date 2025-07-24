@@ -19,7 +19,6 @@ class AST_Node():
         self.left = left
         self.right = right
         self.op = op
-        print(self.to_string(0))
 
     @abstractmethod
     def invariant(self):
@@ -28,8 +27,9 @@ class AST_Node():
     @abstractmethod
     def interpret(self):
         pass
-
-    def to_string(self, tabs):
+    
+    # placeholder to_string function inherited by other tree nodes
+    def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
             string += "\t"
@@ -38,7 +38,10 @@ class AST_Node():
         if self.right != None:
             string += "\n" + self.right.to_string(tabs + 1)
         return string
-
+    
+    # placeholder __str__ overriden from object class for child classes
+    def __str__(self):
+        return self.left.__str__() + " " + self.op.symbol + " " + self.right.__str__()
 
 #class Expr extends the AST Node and implements the interpret method according to the BNF
 class Expr(AST_Node):
@@ -61,6 +64,13 @@ class Expr(AST_Node):
             return self.left.interpret() + self.right.interpret()
         return self.left.interpret() - self.right.interpret()
 
+    #resolves hierarchy issues with negation
+    def __str__(self):
+        if type(self.right) == Expr and self.right.op.symbol == "-" and self.op.symbol == "-":
+            return self.left.__str__() + " " + self.op.symbol + " (" + self.right.__str__() + ")"
+        return AST_Node.__str__(self)
+    
+
 #class Term extends the Expr Node and implements the interpret method according to the BNF
 class Term(Expr):
     def __init__(self, left, right, op):
@@ -82,6 +92,20 @@ class Term(Expr):
             return self.left.interpret() * self.right.interpret()
         return self.left.interpret() / self.right.interpret()
 
+    # resolves hierarchy issues, prints parentheses if a higher order node is a child
+    def __str__(self):
+        ret = ""
+        if type(self) == Term and type(self.left) == Expr:
+            ret += "(" + self.left.__str__() + ")"
+        else:
+            ret += self.left.__str__()
+        ret += " " + self.op.symbol + " "
+        if type(self) == Term and type(self.right) == Expr:
+            ret += "(" + self.right.__str__() + ")"
+        else:
+            ret += self.right.__str__()
+        return ret
+
 # class Factor extends the Term Node and implements the interpret method according to the BNF
 class Factor(Expr):
     def __init__(self, left, right, op):
@@ -101,36 +125,46 @@ class Factor(Expr):
             return self.left.interpret()
         return self.left.interpret() ** self.right.interpret()
     
+    #resolves hierarchy issues, prints parentheses if higher order node is child
+    def __str__(self):
+        ret = ""
+        if type(self) == Factor and type(self.left) in (Expr, Term):
+            ret += "(" + self.left.__str__() + ")"
+        else:
+            ret += self.left.__str__()
+        ret += " " + self.op.symbol + " "
+        if type(self) == Factor and type(self.right) in (Expr, Term):
+            ret += "(" + self.right.__str__() + ")"
+        else:
+            ret += self.right.__str__()
+        return ret
+    
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
 class Number(Factor):
-    def __init__(self, values):
+    def __init__(self, values, neg=False):
         self.values = values
+        self.neg = neg
     
     # every emlement in the list, either ht e
     def invariant(self):
         for i in self.values:
-            if not i.name == INTEGER or i.name == PERIOD:
+            if not (i.name == INTEGER or i.name == PERIOD):
                 return False
         return len([x for x in self.values if x.name == PERIOD]) <= 1
 
+    # returns the decimal value of the number
     def interpret(self):
         if not self.invariant():
             raise Exception("illegal number node")
-        num, decimal = 0, False
-        period = 0
-        for i in self.values:
-            if i.name == PERIOD:
-                if decimal:
-                    raise Exception("number with too many decimal places")
-                decimal = True
-                continue
-            if i.name == INTEGER and decimal:
-                period += 1
-            num = (10 if period == 0 else 1) * num + i.symbol / (10 ** period)
-        return num
+        return (-1 if self.neg else 1) * float("".join([str(i.symbol) for i in self.values]))
 
-    def to_string(self, tabs):
+    # prints out the number, as represented by the array of symbols
+    def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
             string += "\t"
-        return string + "|-> " + type(self).__name__ + ", " + str([i.symbol for i in self.values])
+        return string + "|-> " + type(self).__name__ + ", " + ("-" if self.neg else "") + str([i.symbol for i in self.values])
+
+    # prints out the number, as represented by the array of symbols
+    def __str__(self):
+        return ("-" if self.neg else "") + "".join([str(i.symbol) for i in self.values])

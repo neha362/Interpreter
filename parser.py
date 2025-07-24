@@ -18,6 +18,7 @@ class Parser:
     #begins the interpretation process and returns the evaluated value, if the expression is valid
     def build(self):
         self.tree = self.build_expr()
+        assert(self.lexer.token.name == EOF)
     # checks whether the next token is the same type as the expected token and advances the parser to the next token
     
     # builds a factor node
@@ -39,13 +40,12 @@ class Parser:
     # builds a number node
     # number := INTEGER* | INTEGER* PERIOD INTEGER
     def build_number(self):
-        decimal, num = False, []
+        decimal, num, neg = False, [], False
         assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP)
         if self.lexer.token.name == ADDOP:
             assert self.lexer.token.symbol == "-"
-            token = self.lexer.token
+            neg = True
             self.lexer.eat(ADDOP)
-            return Expr(Number([Token(INTEGER, 0)]), self.build_number(), token)
         while self.lexer.token.name in (INTEGER, PERIOD):
             if self.lexer.token.name == PERIOD:
                 if decimal:
@@ -55,7 +55,7 @@ class Parser:
             self.lexer.next_token(False)
         if self.lexer.token.name == SPACE:
             self.lexer.next_token()
-        return Number(num)
+        return Number(num, neg)
     
     # builds a term node
     # term := factor (MULOP factor)*
@@ -67,10 +67,18 @@ class Parser:
             op = self.lexer.token
             self.lexer.eat(op.name)
             match op.symbol:
+                #handles tree rotation to ensure balanced tree
                 case "*":
-                    node = Term(self.build_factor(), node, op)
+                    if type(node) == Term and type(node.left) == Term and node.op.symbol == "*":
+                        node = Term(node.left, Term(node.right, self.build_term(), op), op)
+                    else:
+                        node = Term(node, self.build_factor(), op)
                 case "(":
-                    node = Term(self.build_expr(), node, Token(MULOP, "*"))
+                    op = Token(MULOP, "*")
+                    if type(node) == Term and type(node.left) == Term and node.op.symbol == "*":
+                        node = Term(node.left, Term(node.right, self.build_expr(), op), op)
+                    else:
+                        node = Term(node, self.build_expr(), op)
                     self.lexer.eat(CPAREN)
                 case _:
                     node = Term(node, self.build_factor(), op)
@@ -81,6 +89,8 @@ class Parser:
     def build_expr(self):
         if self.lexer.pos == -1:
             self.lexer.next_token()
+            if self.lexer.token.name == EOF:
+                return Number([Token(INTEGER, 0)])
         token = self.lexer.token.name
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
@@ -88,8 +98,12 @@ class Parser:
             op = self.lexer.token
             self.lexer.eat(ADDOP)
             match op.symbol:
+                #performs tree rotation to ensure balanced tree
                 case "+":
-                    node = Expr(self.build_term(), node, op)
+                    if type(node) == Expr and type(node.left) == Expr and node.op.symbol == "+":
+                        node = Expr(node.left, Expr(node.right, self.build_term(), op), op)
+                    else:
+                        node = Expr(node, self.build_term(), op)
                 case _:
                     node = Expr(node, self.build_term(), op)
         return node
