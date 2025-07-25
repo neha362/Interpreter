@@ -1,0 +1,14 @@
+BNF: 
+program := compound statement DOT
+compound statement := BEGIN statement_list END
+statement_list := statement | statement SEMICOLON statement_list
+statement := compound_statement | assignment_statement | empty
+assignment_statement := variable ASSIGNEQ expr
+empty := 
+expr := term (ADDOP expr)*
+term := factor (MULOP term)*
+mulop := * | /
+addop := + | -
+factor := (expr) | number (^ factor)* | variable
+number :=  ADDOP? INTEGER* (PERIOD INTEGER*)?
+variable := ID

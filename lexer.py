@@ -43,6 +43,25 @@ class Lexer:
                     self.token = Token(PERIOD, ".")
                 case "^":
                     self.token = Token(CARET, "^")
+                case ".":
+                    self.token = Token(DOT, ".")
+                case "B":
+                    if self.pos <= len(self.expr) - 5 and self.expr[self.pos:self.pos + 5] == "BEGIN":
+                        self.token = Token(BEGIN, "BEGIN")
+                        self.pos += 4
+                case "E":
+                    if self.pos <= len(self.expr) - 3 and self.expr[self.pos:self.pos + 3] == "END":
+                        self.token = Token(END, "END")
+                        self.pos += 2
+                case ":":
+                    if not self.pos == len(self.expr) - 1 and self.expr[self.pos + 1] == "=":
+                        self.token = Token(ASSIGNEQ, ":=")
+                        self.pos += 1
+                case "^":
+                    self.token = Token(SEMICOLON, ";")
                 case _:
                     raise Exception("illegal symbol encountered:", curr_char)
+        if self.token == None:
+            raise Exception("token not recognized")
+        print(self.token)
         return self.token
