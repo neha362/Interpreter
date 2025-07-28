@@ -1,15 +1,7 @@
 from tokens import *
 from as_tree import *
 from lexer import *
-'''
-BNF: 
-expr := term (ADDOP term)*
-term := factor (MULOP factor)*
-mulop := * | / | OPAREN
-addop := + | -
-factor := (expr) | number (^ factor)*
-number :=  ADDOP? INTEGER* (PERIOD INTEGER*)?
-''' 
+
 class Parser:
     def __init__(self, expr):
         self.lexer = Lexer(expr)

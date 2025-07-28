@@ -3,23 +3,8 @@ from interpreter import *
 from tokens import *
 from lexer import *
 
-'''
-BNF: 
-expr := term (ADDOP expr)*
-term := factor (MULOP term)*
-mulop := * | /
-addop := + | -
-factor := (expr) | number (^ factor)*
-number := INTEGER* | INTEGER* PERIOD INTEGER
-''' 
-
 #class AST_Node holds the abstract interpret() function, which evaluates the node
 class AST_Node():
-    def __init__(self, left, right, op):
-        self.left = left
-        self.right = right
-        self.op = op
-
     @abstractmethod
     def invariant(self):
         pass
@@ -27,6 +12,128 @@ class AST_Node():
     @abstractmethod
     def interpret(self):
         pass
+    
+    def to_string(self, tabs=0):
+        print (type(self).__name__)
+    
+    def __str__(self):
+        return self.to_string
+
+#class Program stores appropriate functions for high-level programs
+class Program(AST_Node):
+    def __init__(self, statements):
+        self.statements = statements
+    
+    def invariant(self):
+        return isinstance(self.statements, CompoundStatement)
+
+    def interpret(self):
+        return self.statements.interpret()
+
+    def to_string(self, tabs=0):
+        return "PROGRAM\n" + self.statements.to_string(tabs + 1)
+
+    def __str__(self):
+        return "PROGRAM\n" + self.statements.__str__()
+    
+#class CompoundStatement stores appropriate functions for compound statements
+class CompoundStatement(AST_Node):
+    def __init__(self, statements):
+        self.statements = statements
+    
+    def invariant(self):
+        return isinstance(self.statements, StatementList)
+
+    def interpret(self):
+        return self.statements.interpret()
+
+    def to_string(self, tabs=0):
+        string = ""
+        for _ in range(tabs):
+            string += "\t"
+        string += "|-> " + type(self).__name__ + "\n" + self.statements.to_string(tabs + 1)
+
+    def __str__(self):
+        return "COMPOUND STATEMENT\n" + self.statements.__str__()
+    
+EMPTY = CompoundStatement([])
+        
+# class StatementList stores appropriate function for statement lists
+class StatementList(AST_Node):
+        def __init__(self, statements):
+            self.statements = statements
+        
+        def invariant(self):
+            for i in self.statements:
+                if not isinstance(i, Statement):
+                    return False
+            return True
+        
+        def interpret(self):
+            ret = []
+            for i in self.statements:
+                ret.append(i.interpret())
+            return ret
+        
+        def to_string(self, tabs=0):
+            string = ""
+            for _ in range(tabs):
+                string += "\t"
+            string += type(self).__name__
+
+        def __str__(self):
+            string = "STATEMENT LIST\n"
+            for i in self.statements:
+                string += "\t" + i.__str__()
+            return string
+
+# class Statement stores appropriate functions for statements
+class Statement(AST_Node):
+    def __init__(self, statement):
+        assert isinstance(statement, CompoundStatement) or isinstance(statement, AssignmentStatement) or statement == EMPTY
+        self.statement = statement
+    
+    def invariant(self):
+        return isinstance(self.statement, CompoundStatement) or isinstance(self.statement, AssignmentStatement) or self.statement == EMPTY
+    
+    def interpret(self):
+        if self.statement == EMPTY:
+            return True
+        return self.statement.interpret()
+    
+    def to_string(self, tabs=0):
+        string = ""
+        for _ in range(tabs):
+            string += "\t"
+        string += self.statement.to_string(tabs + 1)
+        return string
+    
+    def __str__(self):
+        return "STATEMENT: " + self.statement.__str__()
+
+#the AssignmentStatement class contains relevant functions for assignment statements
+class AssignmentStatement(Statement):
+    def __init__(self, variable, expr):
+        assert isinstance(variable, Variable) and isinstance(expr, Expr)
+        self.variable = variable
+        self.expr = expr
+    
+    def to_string(self, tabs=0):
+        string = ""
+        for i in range(tabs):
+            string += "\t"
+        return string + "|-> " + self.variable.to_string(tabs + 1) + " := " + self.expr.to_string(tabs + 1)
+
+    def __str__(self):
+        return self.variable.__str__() + " := " + self.expr.__str__() 
+
+
+#class Binop stores appropriate functions for binary operations
+class Binop(AST_Node):
+    def __init__(self, left, right, op):
+        self.left = left
+        self.right = right
+        self.op = op
     
     # placeholder to_string function inherited by other tree nodes
     def to_string(self, tabs=0):
@@ -42,13 +149,14 @@ class AST_Node():
     # placeholder __str__ overriden from object class for child classes
     def __str__(self):
         return self.left.__str__() + " " + self.op.symbol + " " + self.right.__str__()
+    
 
 #class Expr extends the AST Node and implements the interpret method according to the BNF
-class Expr(AST_Node):
+class Expr(Binop):
     def __init__(self, left, right, op):
         if op.name != ADDOP:
             raise Exception("illegal add node")
-        AST_Node.__init__(self, left, right, op)
+        Binop.__init__(self, left, right, op)
 
     # the left child node must be an Expr and the right node -- if not None -- must also be an Expr
     def invariant(self):
@@ -68,15 +176,15 @@ class Expr(AST_Node):
     def __str__(self):
         if type(self.right) == Expr and self.right.op.symbol == "-" and self.op.symbol == "-":
             return self.left.__str__() + " " + self.op.symbol + " (" + self.right.__str__() + ")"
-        return AST_Node.__str__(self)
+        return Binop.__str__(self)
     
 
 #class Term extends the Expr Node and implements the interpret method according to the BNF
-class Term(Expr):
+class Term(Binop):
     def __init__(self, left, right, op):
         if right != None and op.name != MULOP or right == None and op != None:
             raise Exception("illegal term node")
-        AST_Node.__init__(self, left, right, op)
+        Binop.__init__(self, left, right, op)
     
     # the left node must be of type Term and the right node -- if not None -- must also be of type Term
     def invariant(self):
@@ -107,11 +215,11 @@ class Term(Expr):
         return ret
 
 # class Factor extends the Term Node and implements the interpret method according to the BNF
-class Factor(Expr):
+class Factor(Binop):
     def __init__(self, left, right, op):
         if op.name != CARET:
             raise Exception("illegal factor node")
-        AST_Node.__init__(self, left, right, op)
+        Binop.__init__(self, left, right, op)
 
     # the right term must either be None or the operation must be exponential and the left node must be a number
     def invariant(self):
@@ -140,7 +248,7 @@ class Factor(Expr):
         return ret
     
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
-class Number(Factor):
+class Number(AST_Node):
     def __init__(self, values, neg=False):
         self.values = values
         self.neg = neg
