@@ -11,8 +11,14 @@ class Parser:
     def build(self):
         self.tree = self.build_expr()
         assert(self.lexer.token.name == EOF), "additional characters after expression " + self.lexer.token
-    # checks whether the next token is the same type as the expected token and advances the parser to the next token
     
+    def build_variable(self):
+        name = ""
+        while self.lexer.token.name in (CHAR, INTEGER):
+            name += self.lexer.token.symbol
+        return name
+
+
     # builds a factor node
     # factor := (expr) | number (^ factor)*
     def build_factor(self):
@@ -21,7 +27,7 @@ class Parser:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
             self.lexer.eat(CPAREN)
-        elif self.lexer.token.name in (INTEGER, PERIOD, ADDOP):
+        elif self.lexer.token.name in (CHAR, INTEGER, PERIOD, ADDOP):
             node1 = self.build_number()
         while self.lexer.token.name == CARET:
             op = self.lexer.token
@@ -56,7 +62,7 @@ class Parser:
     # term := factor (MULOP factor)*
     # MULOP := * | /
     def build_term(self):
-        assert self.lexer.token.name in (EOF, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token
+        assert self.lexer.token.name in (EOF, CHAR, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token
         node = self.build_factor()
         while self.lexer.token.name in (MULOP, OPAREN) :
             op = self.lexer.token
@@ -102,4 +108,4 @@ class Parser:
                 case _:
                     node = Expr(node, self.build_term(), op)
         return node
-
+    

@@ -3,6 +3,8 @@ from interpreter import *
 from tokens import *
 from lexer import *
 
+table = {}
+
 #class AST_Node holds the abstract interpret() function, which evaluates the node
 class AST_Node():
     @abstractmethod
@@ -121,6 +123,9 @@ class AssignmentStatement(Statement):
     def invariant(self):
         return isinstance(self.variable, Variable) and isinstance(self.expr, Expr)
     
+    def interpret(self):
+        table[self.variable] = self.expr.interpret()
+    
     def to_string(self, tabs=0):
         string = ""
         for i in range(tabs):
@@ -219,16 +224,15 @@ class Term(Binop):
 
 #class Variable contains the relevant functions for variables
 class Variable():
-    def __init__(self, id, value):
-        assert isinstance(value, Expr) and isinstance(id, str)
+    def __init__(self, id):
+        assert isinstance(id, str)
         self.id = id
-        self.value = value
 
     def invariant(self):
-        return isinstance(self.value, Expr) and isinstance(self.id, str)
+        return isinstance(self.id, str)
     
     def interpret(self):
-        return self.value.interpret()
+        return table[self.id]
     
     def to_string(self, tabs=0):
         for _ in range(tabs):
@@ -236,8 +240,8 @@ class Variable():
         string = "|-> ( = )\n"
         for _ in range(tabs + 1):
             string += "\t"
-        string += " |-> " + self.id + "\n"
-        return string + self.value.to_string(tabs + 1)
+        string += "|-> " + self.id + "\n"
+        return string + "|->" + table[self.id]
     
     def __str__(self):
         return self.id + " (" + self.value.__str__() + ") "
