@@ -118,6 +118,9 @@ class AssignmentStatement(Statement):
         self.variable = variable
         self.expr = expr
     
+    def invariant(self):
+        return isinstance(self.variable, Variable) and isinstance(self.expr, Expr)
+    
     def to_string(self, tabs=0):
         string = ""
         for i in range(tabs):
@@ -214,6 +217,31 @@ class Term(Binop):
             ret += self.right.__str__()
         return ret
 
+#class Variable contains the relevant functions for variables
+class Variable():
+    def __init__(self, id, value):
+        assert isinstance(value, Expr) and isinstance(id, str)
+        self.id = id
+        self.value = value
+
+    def invariant(self):
+        return isinstance(self.value, Expr) and isinstance(self.id, str)
+    
+    def interpret(self):
+        return self.value.interpret()
+    
+    def to_string(self, tabs=0):
+        for _ in range(tabs):
+            string += "\t"
+        string = "|-> ( = )\n"
+        for _ in range(tabs + 1):
+            string += "\t"
+        string += " |-> " + self.id + "\n"
+        return string + self.value.to_string(tabs + 1)
+    
+    def __str__(self):
+        return self.id + " (" + self.value.__str__() + ") "
+
 # class Factor extends the Term Node and implements the interpret method according to the BNF
 class Factor(Binop):
     def __init__(self, left, right, op):
@@ -246,6 +274,7 @@ class Factor(Binop):
         else:
             ret += self.right.__str__()
         return ret
+    
     
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
 class Number(AST_Node):
