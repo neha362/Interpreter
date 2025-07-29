@@ -9,14 +9,15 @@ class Parser:
     
     #begins the interpretation process and returns the evaluated value, if the expression is valid
     def build(self):
-        self.tree = self.build_expr()
+        self.tree = self.build_program()
         assert(self.lexer.token.name == EOF), "additional characters after expression " + self.lexer.token
     
     def build_variable(self):
         name = ""
         while self.lexer.token.name in (CHAR, INTEGER):
             name += self.lexer.token.symbol
-        return name
+            self.lexer.next_token(skip_spaces=False)
+        return Variable(name)
 
 
     # builds a factor node
@@ -27,7 +28,9 @@ class Parser:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
             self.lexer.eat(CPAREN)
-        elif self.lexer.token.name in (CHAR, INTEGER, PERIOD, ADDOP):
+        elif self.lexer.token.name == CHAR:
+            node1 = self.build_variable()
+        elif self.lexer.token.name in (INTEGER, PERIOD, ADDOP):
             node1 = self.build_number()
         while self.lexer.token.name == CARET:
             op = self.lexer.token
@@ -39,7 +42,7 @@ class Parser:
     # number := INTEGER* | INTEGER* PERIOD INTEGER
     def build_number(self):
         decimal, num, neg = False, [], False
-        assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP), "number identified but incorrect token " + self.lexer.token
+        assert self.lexer.token.name in (INTEGER, PERIOD, ADDOP), "number identified but incorrect token " + self.lexer.token.name
         if self.lexer.token.name == ADDOP:
             assert self.lexer.token.symbol == "-", "expected negative value but plus found instead"
             neg = True
@@ -62,7 +65,7 @@ class Parser:
     # term := factor (MULOP factor)*
     # MULOP := * | /
     def build_term(self):
-        assert self.lexer.token.name in (EOF, CHAR, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token
+        assert self.lexer.token.name in (EOF, CHAR, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token.symbol
         node = self.build_factor()
         while self.lexer.token.name in (MULOP, OPAREN) :
             op = self.lexer.token
@@ -88,10 +91,6 @@ class Parser:
     # evaluates the rule for expressions
     # expr := term (ADDOP term)*
     def build_expr(self):
-        if self.lexer.pos == -1:
-            self.lexer.next_token()
-            if self.lexer.token.name == EOF:
-                return Number([Token(INTEGER, 0)])
         token = self.lexer.token.name
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
@@ -109,3 +108,46 @@ class Parser:
                     node = Expr(node, self.build_term(), op)
         return node
     
+    def build_program(self):
+        if self.lexer.pos == -1:
+            self.lexer.next_token()
+            if self.lexer.token.name == EOF:
+                return Program(EMPTY)
+        node = self.build_compoundStatement()
+        self.lexer.eat(DOT)
+        return Program(node)
+    
+    def build_compoundStatement(self):
+        self.lexer.eat(BEGIN)
+        node = self.build_statementList()
+        self.lexer.eat(END)
+        return CompoundStatement(node)
+    
+    def build_statementList(self):
+        nodes = [self.build_statement()]
+        while self.lexer.token.name == SEMICOLON:
+            self.lexer.eat(SEMICOLON)
+            node = self.build_statement()
+            print(node.to_string())
+            nodes.append(node)
+        return StatementList(nodes)
+    
+    def build_statement(self):
+        if self.lexer.token.name == BEGIN:
+            return Statement(self.build_compoundStatement())
+        elif self.lexer.token.name in (DOT, END, SEMICOLON):
+            return Statement(EMPTY)
+        return Statement(self.build_assignmentStatement())
+
+    def build_assignmentStatement(self):
+        variable = self.build_variable()
+        if self.lexer.token.name == SPACE:
+            self.lexer.next_token()
+        self.lexer.eat(ASSIGNEQ)
+        return AssignmentStatement(variable, self.build_expr())
+    
+
+    
+
+        
+        

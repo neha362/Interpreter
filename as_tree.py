@@ -42,6 +42,7 @@ class Program(AST_Node):
 class CompoundStatement(AST_Node):
     def __init__(self, statements):
         self.statements = statements
+       
     
     def invariant(self):
         return isinstance(self.statements, StatementList)
@@ -92,7 +93,7 @@ class StatementList(AST_Node):
 # class Statement stores appropriate functions for statements
 class Statement(AST_Node):
     def __init__(self, statement):
-        assert isinstance(statement, CompoundStatement) or isinstance(statement, AssignmentStatement) or statement == EMPTY
+        assert isinstance(statement, CompoundStatement) or isinstance(statement, AssignmentStatement) or statement == EMPTY, "statement invariant violated"
         self.statement = statement
     
     def invariant(self):
@@ -116,7 +117,7 @@ class Statement(AST_Node):
 #the AssignmentStatement class contains relevant functions for assignment statements
 class AssignmentStatement(Statement):
     def __init__(self, variable, expr):
-        assert isinstance(variable, Variable) and isinstance(expr, Expr)
+        assert isinstance(variable, Variable) and isinstance(expr, Expr), "assignment statement invariant violated "
         self.variable = variable
         self.expr = expr
     
@@ -188,7 +189,7 @@ class Expr(Binop):
     
 
 #class Term extends the Expr Node and implements the interpret method according to the BNF
-class Term(Binop):
+class Term(Expr):
     def __init__(self, left, right, op):
         if right != None and op.name != MULOP or right == None and op != None:
             raise Exception("illegal term node")
@@ -223,31 +224,34 @@ class Term(Binop):
         return ret
 
 #class Variable contains the relevant functions for variables
-class Variable():
+class Variable(Term):
     def __init__(self, id):
-        assert isinstance(id, str)
+        assert isinstance(id, str), "variable name not a string"
         self.id = id
 
     def invariant(self):
         return isinstance(self.id, str)
     
     def interpret(self):
-        return table[self.id]
+        if self.id in table:
+            return table[self.id]
+        raise Exception("variable not defined")
     
     def to_string(self, tabs=0):
+        string = ""
         for _ in range(tabs):
             string += "\t"
-        string = "|-> ( = )\n"
+        string += "|-> ( = )\n"
         for _ in range(tabs + 1):
             string += "\t"
         string += "|-> " + self.id + "\n"
-        return string + "|->" + table[self.id]
+        return string + (table[self.id] if self.id in table else "")
     
     def __str__(self):
         return self.id + " (" + self.value.__str__() + ") "
 
 # class Factor extends the Term Node and implements the interpret method according to the BNF
-class Factor(Binop):
+class Factor(Term):
     def __init__(self, left, right, op):
         if op.name != CARET:
             raise Exception("illegal factor node")
@@ -281,7 +285,7 @@ class Factor(Binop):
     
     
 # class Number extends the Factor node and implements the interpret method according to the BNF rule (number := INTEGER* | INTEGER* PERIOD INTEGER)
-class Number(AST_Node):
+class Number(Factor):
     def __init__(self, values, neg=False):
         self.values = values
         self.neg = neg

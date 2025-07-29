@@ -10,7 +10,7 @@ class Lexer:
 
     #checks if the next token is the expected type, then consumes that token
     def eat(self, token):
-        assert self.token.name == token, "incorrect token specified to eat"
+        assert self.token.name == token, "incorrect token specified to eat, expected " + token + " but got " + self.token.name
         self.next_token()
 
     #advances the parser to the next token in the expression and returns the next token, if valid
@@ -55,15 +55,15 @@ class Lexer:
                 if not self.pos == len(self.expr) - 1 and self.expr[self.pos + 1] == "=":
                     self.token = Token(ASSIGNEQ, ":=")
                     self.pos += 1
-            case "^":
+            case ";":
                 self.token = Token(SEMICOLON, ";")
             case _:
                 if curr_char.isnumeric():
                     self.token = Token(INTEGER, int(curr_char))
-                elif curr_char.isalpha():
+                elif curr_char.isalnum():
                     self.token = Token(CHAR, curr_char)
-                raise Exception("illegal symbol encountered:", curr_char)
+                else:
+                    raise Exception("illegal symbol encountered:", curr_char)
         if self.token == None:
             raise Exception("token not recognized")
-        print(self.token)
         return self.token
