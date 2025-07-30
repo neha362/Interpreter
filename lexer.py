@@ -25,6 +25,10 @@ class Lexer:
         match curr_char.lower():
             case " ":
                 self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
+            case "\n":
+                self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
+            case "\t":
+                self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
             case "(":
                 self.token = Token(OPAREN, "(")
             case ")":

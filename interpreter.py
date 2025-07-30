@@ -13,7 +13,6 @@ class Interpreter:
     
     #takes the tree built by the parser and interpets it
     def interpret(self):
-        print(self.parser.tree.to_string())
         return self.parser.tree.interpret()
 
     def input(self):

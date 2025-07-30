@@ -3,6 +3,8 @@ from interpreter import *
 from tokens import *
 from lexer import *
 
+tab = "  "
+
 #class AST_Node holds the abstract interpret() function, which evaluates the node
 class AST_Node():
     @abstractmethod
@@ -41,31 +43,32 @@ class Program(AST_Node):
 class CompoundStatement(AST_Node):
     def __init__(self, statements):
         self.statements = statements
+        self.env = None
     
     def invariant(self):
         return isinstance(self.statements, StatementList)
 
     def interpret(self, env):
-        res, env = self.statements.interpret(env.copy())
+        res, self.env = self.statements.interpret(env.copy())
         return res, env
 
     def to_string(self, tabs=0):
         if isinstance(self.statements, list):
             string = ""
             for _ in range(tabs):
-                string += "\t"
+                string += tab
             string += "|-> " + type(self).__name__ + " " + "\n"
             for i in self.statements:
                 string += "\n" + i.to_string(tabs + 1)
             return string
         string = ""
         for _ in range(tabs):
-            string += "\t"
-        string += "|-> " + type(self).__name__ + "\n" + self.statements.to_string(tabs + 1)
+            string += tab
+        string += "|-> " + type(self).__name__ + " " + (str(self.env) if self.env != None else "") + "\n" + self.statements.to_string(tabs + 1)
         return string
 
     def __str__(self):
-        return "COMPOUND STATEMENT\n" + self.statements.__str__()
+        return "COMPOUND STATEMENT " + (str(self.env) if self.env != None else "") + "\n" + self.statements.__str__()
     
 EMPTY = CompoundStatement([])
         
@@ -73,6 +76,7 @@ EMPTY = CompoundStatement([])
 class StatementList(AST_Node):
         def __init__(self, statements):
             self.statements = statements
+            self.env = None
         
         def invariant(self):
             for i in self.statements:
@@ -85,21 +89,22 @@ class StatementList(AST_Node):
             for i in self.statements:
                 res, env = i.interpret(env)
                 ret.append(res)
+            self.env = env
             return ret, env
         
         def to_string(self, tabs=0):
             string = ""
             for _ in range(tabs):
-                string += "\t"
-            string += "|-> " + type(self).__name__
+                string += tab
+            string += "|-> " + type(self).__name__ + " " + (str(self.env) if self.env != None else "")
             for i in self.statements:
                 string += "\n" + i.to_string(tabs + 1)
             return string
 
         def __str__(self):
-            string = "STATEMENT LIST\n"
+            string = "STATEMENT LIST " + (str(self.env) if self.env != None else "") + "\n"
             for i in self.statements:
-                string +=  "\t" + i.__str__() + "\n"
+                string +=  tab + i.__str__() + "\n"
             return string
 
 # class Statement stores appropriate functions for statements
@@ -114,13 +119,13 @@ class Statement(AST_Node):
     def interpret(self, env):
         if self.statement == EMPTY:
             return True, env
-        res, env = self.statement.interpret(env)
+        res, _ = self.statement.interpret(env)
         return res, env
     
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += "\t"
+            string += tab
         
         string += "|-> " + type(self).__name__ + "\n" + self.statement.to_string(tabs + 1)
         return string
@@ -145,7 +150,7 @@ class AssignmentStatement(Statement):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += "\t"
+            string += tab
         return string + "|-> := \n" + self.variable.to_string(tabs + 1) + " " + "\n" + self.expr.to_string(tabs + 1)
 
     def __str__(self):
@@ -163,7 +168,7 @@ class Binop(AST_Node):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += "\t"
+            string += tab
         string += "|-> " + type(self).__name__ + ", op = " + ("" if self.op == None else self.op.symbol)
         string += "\n" + self.left.to_string(tabs + 1)
         if self.right != None:
@@ -296,7 +301,7 @@ class Number(Factor):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += "\t"
+            string += tab
         return string + "|-> " + type(self).__name__ + ", " + ("-" if self.neg else "") + str([i.symbol for i in self.values])
 
     # prints out the number, as represented by the array of symbols
@@ -321,10 +326,10 @@ class Variable(Factor):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += "\t"
+            string += tab
         string += "|-> Variable\n"
         for _ in range(tabs + 1):
-            string += "\t"
+            string += tab
         string += "|-> ID: " + self.id + "\n"
         return string
     
