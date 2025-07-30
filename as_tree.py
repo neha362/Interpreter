@@ -3,8 +3,6 @@ from interpreter import *
 from tokens import *
 from lexer import *
 
-table = {}
-
 #class AST_Node holds the abstract interpret() function, which evaluates the node
 class AST_Node():
     @abstractmethod
@@ -23,14 +21,15 @@ class AST_Node():
 
 #class Program stores appropriate functions for high-level programs
 class Program(AST_Node):
-    def __init__(self, statements):
+    def __init__(self, statements, env={}):
         self.statements = statements
+        self.env = env
     
     def invariant(self):
         return isinstance(self.statements, CompoundStatement)
 
     def interpret(self):
-        return self.statements.interpret()
+        return self.statements.interpret(self.env)
 
     def to_string(self, tabs=0):
         return "PROGRAM\n" + self.statements.to_string(tabs + 1)
@@ -46,15 +45,16 @@ class CompoundStatement(AST_Node):
     def invariant(self):
         return isinstance(self.statements, StatementList)
 
-    def interpret(self):
-        return self.statements.interpret()
+    def interpret(self, env):
+        res, env = self.statements.interpret(env.copy())
+        return res, env
 
     def to_string(self, tabs=0):
         if isinstance(self.statements, list):
             string = ""
             for _ in range(tabs):
                 string += "\t"
-            string += "|-> " + type(self).__name__ + "\n"
+            string += "|-> " + type(self).__name__ + " " + "\n"
             for i in self.statements:
                 string += "\n" + i.to_string(tabs + 1)
             return string
@@ -80,11 +80,12 @@ class StatementList(AST_Node):
                     return False
             return True
         
-        def interpret(self):
+        def interpret(self, env):
             ret = []
             for i in self.statements:
-                ret.append(i.interpret())
-            return ret
+                res, env = i.interpret(env)
+                ret.append(res)
+            return ret, env
         
         def to_string(self, tabs=0):
             string = ""
@@ -110,10 +111,11 @@ class Statement(AST_Node):
     def invariant(self):
         return isinstance(self.statement, CompoundStatement) or isinstance(self.statement, AssignmentStatement) or self.statement == EMPTY
     
-    def interpret(self):
+    def interpret(self, env):
         if self.statement == EMPTY:
-            return True
-        return self.statement.interpret()
+            return True, env
+        res, env = self.statement.interpret(env)
+        return res, env
     
     def to_string(self, tabs=0):
         string = ""
@@ -136,14 +138,15 @@ class AssignmentStatement(Statement):
     def invariant(self):
         return isinstance(self.variable, Variable) and isinstance(self.expr, Expr)
     
-    def interpret(self):
-        table[self.variable.id] = self.expr.interpret()
+    def interpret(self, env):
+        env[self.variable.id] = self.expr.interpret(env)
+        return True, env
     
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
             string += "\t"
-        return string + "|-> := \n" + self.variable.to_string(tabs + 1) + "\n" + self.expr.to_string(tabs + 1)
+        return string + "|-> := \n" + self.variable.to_string(tabs + 1) + " " + "\n" + self.expr.to_string(tabs + 1)
 
     def __str__(self):
         return self.variable.__str__() + " := " + self.expr.__str__() 
@@ -184,14 +187,14 @@ class Expr(Binop):
         return (self.right == None or self.op.name == ADDOP)
 
     #interprets according to the Expr rule (expr := term (ADDOP expr)*)
-    def interpret(self):
+    def interpret(self, env):
         if not self.invariant():
             raise Exception("illegal expr node")
         if self.op == None:
-            return self.left.interpret()
+            return self.left.interpret(env)
         if self.op.symbol == "+":
-            return self.left.interpret() + self.right.interpret()
-        return self.left.interpret() - self.right.interpret()
+            return self.left.interpret(env) + self.right.interpret(env)
+        return self.left.interpret(env) - self.right.interpret(env)
 
     #resolves hierarchy issues with negation
     def __str__(self):
@@ -212,14 +215,14 @@ class Term(Expr):
         return (self.right == None or self.op.name == MULOP)
     
     #interpets the node according to the BNF rule for terms (term := factor (MULOP term)*)
-    def interpret(self):
+    def interpret(self, env):
         if not self.invariant():
             raise Exception("illegal term node")
         if self.op == None:
-            return self.left.interpret()
+            return self.left.interpret(env)
         if self.op.symbol == "*":
-            return self.left.interpret() * self.right.interpret()
-        return self.left.interpret() / self.right.interpret()
+            return self.left.interpret(env) * self.right.interpret(env)
+        return self.left.interpret(env) / self.right.interpret(env)
 
     # resolves hierarchy issues, prints parentheses if a higher order node is a child
     def __str__(self):
@@ -236,7 +239,6 @@ class Term(Expr):
         return ret
 
 
-
 # class Factor extends the Term Node and implements the interpret method according to the BNF
 class Factor(Term):
     def __init__(self, left, right, op):
@@ -251,10 +253,10 @@ class Factor(Term):
         return self.op.name == CARET and isinstance(self.left, Number) and isinstance(self.right, Factor)
     
     #interprets the node according to the BNF rule for factor (factor := (expr) | number (^ factor)*)
-    def interpret(self):
+    def interpret(self, env):
         if self.op == None:
-            return self.left.interpret()
-        return self.left.interpret() ** self.right.interpret()
+            return self.left.interpret(env)
+        return self.left.interpret(env) ** self.right.interpret(env)
     
     #resolves hierarchy issues, prints parentheses if higher order node is child
     def __str__(self):
@@ -285,7 +287,7 @@ class Number(Factor):
         return len([x for x in self.values if x.name == PERIOD]) <= 1
 
     # returns the decimal value of the number
-    def interpret(self):
+    def interpret(self, env):
         if not self.invariant():
             raise Exception("illegal number node")
         return (-1 if self.neg else 1) * float("".join([str(i.symbol) for i in self.values]))
@@ -311,10 +313,10 @@ class Variable(Factor):
     def invariant(self):
         return isinstance(self.id, str)
     
-    def interpret(self):
-        if self.id in table:
-            return table[self.id] * (-1 if self.neg else 1)
-        raise Exception("variable not defined")
+    def interpret(self, env):
+        if self.id in env:
+            return env[self.id] * (-1 if self.neg else 1)
+        raise Exception("variable not defined: " + self.id)
     
     def to_string(self, tabs=0):
         string = ""
@@ -324,10 +326,7 @@ class Variable(Factor):
         for _ in range(tabs + 1):
             string += "\t"
         string += "|-> ID: " + self.id + "\n"
-        for _ in range(tabs + 1):
-            string += "\t"
-        string += "|-> Value: " + (table[self.id] if self.id in table else "None") + "\n"
         return string
     
     def __str__(self):
-        return ("-" if self.neg else "") + self.id + " (" + (str(table[self.id]) if self.id in table else "None") + ")"
+        return ("-" if self.neg else "") + self.id

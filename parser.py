@@ -26,7 +26,7 @@ class Parser:
     # builds a factor node
     # factor := (expr) | number (^ factor) | variable*
     def build_factor(self):
-        node1 = None
+        node1 = Number([Token(INTEGER, 0)])
         if self.lexer.token.name == OPAREN:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
@@ -99,7 +99,6 @@ class Parser:
     # evaluates the rule for expressions
     # expr := term (ADDOP term)*
     def build_expr(self):
-        token = self.lexer.token.name
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
             assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN)), "tried to build expr but token unexpected " + self.lexer.token
@@ -121,7 +120,7 @@ class Parser:
         if self.lexer.pos == -1:
             self.lexer.next_token()
             if self.lexer.token.name == EOF:
-                return Program(EMPTY)
+                return Program(EMPTY, {})
         node = self.build_compoundStatement()
         self.lexer.eat(PERIOD)
         return Program(node)

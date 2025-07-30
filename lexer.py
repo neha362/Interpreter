@@ -22,7 +22,7 @@ class Lexer:
             return Token(EOF, None)
         curr_char = self.expr[self.pos]
         
-        match curr_char:
+        match curr_char.lower():
             case " ":
                 self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
             case "(":
@@ -43,14 +43,6 @@ class Lexer:
                 self.token = Token(CARET, "^")
             case ".":
                 self.token = Token(DOT, ".")
-            case "B":
-                if self.pos <= len(self.expr) - 5 and self.expr[self.pos:self.pos + 5] == "BEGIN":
-                    self.token = Token(BEGIN, "BEGIN")
-                    self.pos += 4
-            case "E":
-                if self.pos <= len(self.expr) - 3 and self.expr[self.pos:self.pos + 3] == "END":
-                    self.token = Token(END, "END")
-                    self.pos += 2
             case ":":
                 if not self.pos == len(self.expr) - 1 and self.expr[self.pos + 1] == "=":
                     self.token = Token(ASSIGNEQ, ":=")
@@ -61,7 +53,14 @@ class Lexer:
                 if curr_char.isnumeric():
                     self.token = Token(INTEGER, int(curr_char))
                 elif curr_char.isalnum():
-                    self.token = Token(CHAR, curr_char)
+                    if self.pos <= len(self.expr) - 5 and self.expr[self.pos:self.pos + 5].lower() == "begin":
+                        self.token = Token(BEGIN, "BEGIN")
+                        self.pos += 4
+                    elif self.pos <= len(self.expr) - 3 and self.expr[self.pos:self.pos + 3].lower() == "end":
+                        self.token = Token(END, "END")
+                        self.pos += 2
+                    else:
+                        self.token = Token(CHAR, curr_char)
                 else:
                     raise Exception("illegal symbol encountered:", curr_char)
         if self.token == None:
