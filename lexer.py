@@ -10,7 +10,7 @@ class Lexer:
 
     #checks if the next token is the expected type, then consumes that token
     def eat(self, token):
-        assert self.token.name == token, "incorrect token specified to eat, expected " + token + " but got " + self.token.name
+        assert self.token.name == token, "incorrect token specified to eat, expected " + token + " but got " + self.token.__str__()
         self.next_token()
 
     #advances the parser to the next token in the expression and returns the next token, if valid

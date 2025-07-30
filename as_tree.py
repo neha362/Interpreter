@@ -19,7 +19,7 @@ class AST_Node():
         print (type(self).__name__)
     
     def __str__(self):
-        return self.to_string
+        return self.to_string()
 
 #class Program stores appropriate functions for high-level programs
 class Program(AST_Node):
@@ -42,7 +42,6 @@ class Program(AST_Node):
 class CompoundStatement(AST_Node):
     def __init__(self, statements):
         self.statements = statements
-       
     
     def invariant(self):
         return isinstance(self.statements, StatementList)
@@ -51,10 +50,19 @@ class CompoundStatement(AST_Node):
         return self.statements.interpret()
 
     def to_string(self, tabs=0):
+        if isinstance(self.statements, list):
+            string = ""
+            for _ in range(tabs):
+                string += "\t"
+            string += "|-> " + type(self).__name__ + "\n"
+            for i in self.statements:
+                string += "\n" + i.to_string(tabs + 1)
+            return string
         string = ""
         for _ in range(tabs):
             string += "\t"
         string += "|-> " + type(self).__name__ + "\n" + self.statements.to_string(tabs + 1)
+        return string
 
     def __str__(self):
         return "COMPOUND STATEMENT\n" + self.statements.__str__()
@@ -82,12 +90,15 @@ class StatementList(AST_Node):
             string = ""
             for _ in range(tabs):
                 string += "\t"
-            string += type(self).__name__
+            string += "|-> " + type(self).__name__
+            for i in self.statements:
+                string += "\n" + i.to_string(tabs + 1)
+            return string
 
         def __str__(self):
             string = "STATEMENT LIST\n"
             for i in self.statements:
-                string += "\t" + i.__str__()
+                string +=  "\t" + i.__str__() + "\n"
             return string
 
 # class Statement stores appropriate functions for statements
@@ -108,7 +119,8 @@ class Statement(AST_Node):
         string = ""
         for _ in range(tabs):
             string += "\t"
-        string += self.statement.to_string(tabs + 1)
+        
+        string += "|-> " + type(self).__name__ + "\n" + self.statement.to_string(tabs + 1)
         return string
     
     def __str__(self):
@@ -125,13 +137,13 @@ class AssignmentStatement(Statement):
         return isinstance(self.variable, Variable) and isinstance(self.expr, Expr)
     
     def interpret(self):
-        table[self.variable] = self.expr.interpret()
+        table[self.variable.id] = self.expr.interpret()
     
     def to_string(self, tabs=0):
         string = ""
-        for i in range(tabs):
+        for _ in range(tabs):
             string += "\t"
-        return string + "|-> " + self.variable.to_string(tabs + 1) + " := " + self.expr.to_string(tabs + 1)
+        return string + "|-> := \n" + self.variable.to_string(tabs + 1) + "\n" + self.expr.to_string(tabs + 1)
 
     def __str__(self):
         return self.variable.__str__() + " := " + self.expr.__str__() 
@@ -223,32 +235,7 @@ class Term(Expr):
             ret += self.right.__str__()
         return ret
 
-#class Variable contains the relevant functions for variables
-class Variable(Term):
-    def __init__(self, id):
-        assert isinstance(id, str), "variable name not a string"
-        self.id = id
 
-    def invariant(self):
-        return isinstance(self.id, str)
-    
-    def interpret(self):
-        if self.id in table:
-            return table[self.id]
-        raise Exception("variable not defined")
-    
-    def to_string(self, tabs=0):
-        string = ""
-        for _ in range(tabs):
-            string += "\t"
-        string += "|-> ( = )\n"
-        for _ in range(tabs + 1):
-            string += "\t"
-        string += "|-> " + self.id + "\n"
-        return string + (table[self.id] if self.id in table else "")
-    
-    def __str__(self):
-        return self.id + " (" + self.value.__str__() + ") "
 
 # class Factor extends the Term Node and implements the interpret method according to the BNF
 class Factor(Term):
@@ -313,3 +300,34 @@ class Number(Factor):
     # prints out the number, as represented by the array of symbols
     def __str__(self):
         return ("-" if self.neg else "") + "".join([str(i.symbol) for i in self.values])
+    
+    #class Variable contains the relevant functions for variables
+class Variable(Factor):
+    def __init__(self, id):
+        assert isinstance(id, str), "variable name not a string"
+        self.id = id
+        self.neg = False
+
+    def invariant(self):
+        return isinstance(self.id, str)
+    
+    def interpret(self):
+        if self.id in table:
+            return table[self.id] * (-1 if self.neg else 1)
+        raise Exception("variable not defined")
+    
+    def to_string(self, tabs=0):
+        string = ""
+        for _ in range(tabs):
+            string += "\t"
+        string += "|-> Variable\n"
+        for _ in range(tabs + 1):
+            string += "\t"
+        string += "|-> ID: " + self.id + "\n"
+        for _ in range(tabs + 1):
+            string += "\t"
+        string += "|-> Value: " + (table[self.id] if self.id in table else "None") + "\n"
+        return string
+    
+    def __str__(self):
+        return ("-" if self.neg else "") + self.id + " (" + (str(table[self.id]) if self.id in table else "None") + ")"
