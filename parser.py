@@ -26,7 +26,7 @@ class Parser:
     # builds a factor node
     # factor := (expr) | number (^ factor) | variable*
     def build_factor(self):
-        node1 = Number([Token(INTEGER, 0)])
+        node1 = None
         if self.lexer.token.name == OPAREN:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
@@ -119,11 +119,14 @@ class Parser:
     def build_program(self):
         if self.lexer.pos == -1:
             self.lexer.next_token()
+            assert(self.lexer.token.name == "PROGRAM")
+            self.lexer.eat("PROGRAM")
+            name = self.build_variable()
             if self.lexer.token.name == EOF:
                 return Program(EMPTY, {})
         node = self.build_compoundStatement()
         self.lexer.eat(PERIOD)
-        return Program(node)
+        return Program(node, name)
     
     #builds a compound statement (multiple statements with beginning and end)
     def build_compoundStatement(self):

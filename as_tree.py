@@ -23,9 +23,10 @@ class AST_Node():
 
 #class Program stores appropriate functions for high-level programs
 class Program(AST_Node):
-    def __init__(self, statements, env={}):
+    def __init__(self, statements, name, env={}):
         self.statements = statements
         self.env = env
+        self.name = name
     
     def invariant(self):
         return isinstance(self.statements, CompoundStatement)
@@ -34,10 +35,10 @@ class Program(AST_Node):
         return self.statements.interpret(self.env)
 
     def to_string(self, tabs=0):
-        return "PROGRAM\n" + self.statements.to_string(tabs + 1)
+        return "PROGRAM (" + self.name + ")\n" + self.statements.to_string(tabs + 1)
 
     def __str__(self):
-        return "PROGRAM\n" + self.statements.__str__()
+        return "PROGRAM (" + self.name + ")\n" + self.statements.__str__()
     
 #class CompoundStatement stores appropriate functions for compound statements
 class CompoundStatement(AST_Node):

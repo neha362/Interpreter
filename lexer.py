@@ -57,14 +57,11 @@ class Lexer:
                 if curr_char.isnumeric():
                     self.token = Token(INTEGER, int(curr_char))
                 elif curr_char.isalnum():
-                    if self.pos <= len(self.expr) - 5 and self.expr[self.pos:self.pos + 5].lower() == "begin":
-                        self.token = Token(BEGIN, "BEGIN")
-                        self.pos += 4
-                    elif self.pos <= len(self.expr) - 3 and self.expr[self.pos:self.pos + 3].lower() == "end":
-                        self.token = Token(END, "END")
-                        self.pos += 2
-                    else:
-                        self.token = Token(CHAR, curr_char)
+                    self.token = Token(CHAR, curr_char)
+                    for keyword in keywords:
+                        if self.pos <= len(self.expr) - len(keyword) and self.expr[self.pos:self.pos + len(keyword)].upper() == keyword:
+                            self.token = Token(keywords[keyword], keyword)
+                            self.pos += len(keyword) - 1
                 else:
                     raise Exception("illegal symbol encountered:", curr_char)
         if self.token == None:

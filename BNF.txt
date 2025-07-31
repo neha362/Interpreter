@@ -1,13 +1,18 @@
 BNF: 
-program := compound statement DOT
+program := PROGRAM variable SEMICOLON declaration_list statement_list DOT
 compound statement := BEGIN statement_list END
+declaration_list := VAR (declaration SEMICOLON)*
+declaration := variable (COMMMA variable)* COLON type
+type := INTEGER | REAL | CHAR
 statement_list := statement | statement SEMICOLON statement_list
-statement := compound_statement | assignment_statement | empty
+statement := compound_statement | assignment_statement | comment | function | empty
+comment := LBRACE (CHAR + SPACE)* RBRACE
+function := variable LPAREN factor (COMMA factor)* OPAREN
 assignment_statement := variable ASSIGNEQ expr
 empty := 
 expr := term (ADDOP expr)*
 term := factor (MULOP term)*
-mulop := * | /
+mulop := * | / | DIV
 addop := + | -
 factor := ADDOP? ((expr) | number (^ factor)* | variable)
 number :=  INTEGER* (PERIOD INTEGER*)?
