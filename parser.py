@@ -1,5 +1,5 @@
 from tokens import *
-from as_tree import *
+from .as_tree import *
 from lexer import *
 
 class Parser:

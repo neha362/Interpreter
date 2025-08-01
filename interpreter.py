@@ -1,7 +1,6 @@
 from tokens import *
 from lexer import Lexer
 from parser import *
-from as_tree import *
 
 
 '''class Interpreter parses an expression and evaluates the sentence based on the BNF form of the expression. '''

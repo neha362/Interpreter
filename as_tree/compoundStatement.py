@@ -1,0 +1,35 @@
+from AST_Node import *
+from statementList import *
+
+#class CompoundStatement stores appropriate functions for compound statements
+class CompoundStatement(AST_Node):
+    def __init__(self, statements):
+        self.statements = statements
+        self.env = None
+    
+    def invariant(self):
+        return isinstance(self.statements, StatementList)
+
+    def interpret(self, env):
+        res, self.env = self.statements.interpret(env.copy())
+        return res, env
+
+    def to_string(self, tabs=0):
+        if isinstance(self.statements, list):
+            string = ""
+            for _ in range(tabs):
+                string += tab
+            string += "|-> " + type(self).__name__ + " " + "\n"
+            for i in self.statements:
+                string += "\n" + i.to_string(tabs + 1)
+            return string
+        string = ""
+        for _ in range(tabs):
+            string += tab
+        string += "|-> " + type(self).__name__ + " " + (str(self.env) if self.env != None else "") + "\n" + self.statements.to_string(tabs + 1)
+        return string
+
+    def __str__(self):
+        return "COMPOUND STATEMENT " + (str(self.env) if self.env != None else "") + "\n" + self.statements.__str__()
+    
+EMPTY = CompoundStatement([])
