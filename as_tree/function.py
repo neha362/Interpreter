@@ -16,8 +16,22 @@ class Function:
         return True
     
     def interpret(self, env):
-        if self.func_name in env:
-            assert isinstance(env[self.func_name], function), "variable is not a function"
-            return env[self.func_name](self.args)
-        raise Exception("function name not found")
-            
+        func = self.func_name.interpret(env)
+        assert isinstance(func, function), "variable is not a function"
+        return func(self.args)
+    
+    def to_string(self, tabs=0):
+        string = ""
+        for _ in range(tabs):
+            string += tab
+        string += "|-> Function\n"
+        for _ in range(tabs + 1):
+            string += tab
+        string += "|-> Name: " + str(self.func_name) + "\n"
+        for _ in range(tabs + 1):
+            string += tab
+        string += "|-> Inputs: " + str(self.args) + "\n"
+        return string
+
+    def __str__(self):
+        return str(self.func_name) + " (" + str(self.args) + ")"
