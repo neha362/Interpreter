@@ -12,7 +12,7 @@ class AST_Node():
         pass
 
     @abstractmethod
-    def interpret(self):
+    def interpret(self, env={}):
         pass
     
     def to_string(self, tabs=0):
@@ -20,3 +20,6 @@ class AST_Node():
     
     def __str__(self):
         return self.to_string()
+    
+    def print_env(env):
+        return str([str(i) + ": " + str(env[i]) for i in env])

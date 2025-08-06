@@ -1,15 +1,10 @@
  #tokens
-INTEGER, MULOP, ADDOP, EOF, SPACE, OPAREN, PERIOD, CPAREN, CARET, DOT, ASSIGNEQ, SEMICOLON, CHAR = "INTEGER", "MULOP", "ADDOP", "EOF", "SPACE", "OPAREN", "PERIOD", "CPAREN", "CARET", "DOT", "ASSIGNEQ", "SEMICOLON", "CHAR"
+INTEGER, MULOP, ADDOP, EOF, SPACE, OPAREN, PERIOD, CPAREN, CARET, DOT, ASSIGNEQ, SEMICOLON, CHAR, COMMA, COLON, QUOTE = "INTEGER", "MULOP", "ADDOP", "EOF", "SPACE", "OPAREN", "PERIOD", "CPAREN", "CARET", "DOT", "ASSIGNEQ", "SEMICOLON", "CHAR", "COMMA", "COLON", "QUOTE"
 
 #keywords
-PROGRAM = "PROGRAM"
-VAR = "VAR"
-BEGIN = "BEGIN"
-END = "END"
-INTEGER = "INTEGER"
-REAL = "REAL"
-DIV = "DIV"
-CHAR = "CHAR"
+PROGRAM, VAR, BEGIN, END, INTEGER, REAL, DIV, CHAR = "PROGRAM","VAR", "BEGIN", "END", "INTEGER", "REAL", "DIV", "CHAR"
+
+keywords = {PROGRAM, VAR, BEGIN, END, INTEGER, REAL, DIV, CHAR }
 
 '''class Token represents a token and contains its __str__ function. There are seven types of tokens that are recognized by the program: single-digit integers, mulops (* or /), addops (+ or -), periods, spaces, oparens ("("), cparens(")"), and the end of file.'''
 class Token:

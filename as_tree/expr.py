@@ -1,4 +1,4 @@
-from binop import *
+from as_tree.binop import *
 
 #class Expr extends the AST Node and implements the interpret method according to the BNF
 class Expr(Binop):

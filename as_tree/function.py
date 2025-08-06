@@ -1,5 +1,5 @@
-from variable import *
-from factor import *
+from as_tree.variable import *
+from as_tree.factor import *
 
 # the function class stores functions relevant to building functions within the program
 class Function:

@@ -1,5 +1,6 @@
 from interpreter import *
 import sys
+from parser import *
 
 
 def expr_eval(): 
@@ -30,9 +31,10 @@ def file_eval(file):
         interpreter = Interpreter(my_file.read())
         x = str(interpreter.interpret())
         print(interpreter.input() + " = " + x)
-    except Exception as e:
-        print(e)
+        print(interpreter.parser.tree.to_string())
+    # except Exception as e:
+    #     print(e)
     finally:
         my_file.close()
 
-file_eval("text.txt")
+file_eval("part10.txt")

@@ -1,5 +1,9 @@
 from tokens import *
-from .as_tree import *
+from as_tree import *
+from as_tree.program import *
+from as_tree.function import *
+from as_tree.number import *
+from as_tree.assignmentStatement import *
 from lexer import *
 
 class Parser:
@@ -15,11 +19,21 @@ class Parser:
     #builds a variable
     def build_variable(self):
         name = ""
+        if self.lexer.token.name == QUOTE:
+            self.lexer.eat(QUOTE)
+            name = ""
+            while self.lexer.token.name != QUOTE:
+                name += self.lexer.token.symbol
+                self.lexer.next_token(False)
+            self.lexer.eat(QUOTE)
+            return Variable(name)
         while self.lexer.token.name in (CHAR, INTEGER):
-            name += self.lexer.token.symbol
+            assert str.isalnum(str(self.lexer.token.symbol)) or self.lexer.token.symbol in ("-", "_"), "expected valid variable characters but found " + self.lexer.token.symbol
+            name += str(self.lexer.token.symbol)
             self.lexer.next_token(skip_spaces=False)
         if self.lexer.token.name == SPACE:
             self.lexer.next_token()
+        assert not name in keywords, "variable " + name + " is a keyword"
         return Variable(name)
 
 
@@ -31,7 +45,7 @@ class Parser:
             self.lexer.eat(OPAREN)
             node1 = self.build_expr()
             self.lexer.eat(CPAREN)
-        elif self.lexer.token.name == CHAR:
+        elif self.lexer.token.name in (CHAR, QUOTE):
             node1 = self.build_variable()
         elif self.lexer.token.name == ADDOP:
             sign = self.lexer.token
@@ -71,11 +85,11 @@ class Parser:
     
     # builds a term node
     # term := factor (MULOP factor)*
-    # MULOP := * | /
+    # MULOP := * | / | DIV
     def build_term(self):
         assert self.lexer.token.name in (EOF, CHAR, INTEGER, OPAREN, PERIOD, ADDOP), "building term but token unexpected " + self.lexer.token
         node = self.build_factor()
-        while self.lexer.token.name in (MULOP, OPAREN) :
+        while self.lexer.token.name in (MULOP, OPAREN, DIV) :
             op = self.lexer.token
             self.lexer.eat(op.name)
             match op.symbol:
@@ -101,7 +115,7 @@ class Parser:
     def build_expr(self):
         node = self.build_term()
         while(self.lexer.token.name == ADDOP):
-            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN)), "tried to build expr but token unexpected " + self.lexer.token
+            assert(self.lexer.token.name in (ADDOP, CPAREN, MULOP, CARET, OPAREN, DIV)), "tried to build expr but token unexpected " + self.lexer.token
             op = self.lexer.token
             self.lexer.eat(ADDOP)
             match op.symbol:
@@ -115,18 +129,43 @@ class Parser:
                     node = Expr(node, self.build_term(), op)
         return node
     
+    #builds a declaration
+    def build_declaration(self):
+        variable = [self.build_variable()]
+        while self.lexer.token.name == COMMA:
+            self.lexer.eat(COMMA)
+            variable.append(self.build_variable())
+        self.lexer.eat(COLON)
+        assert self.lexer.token.name in (INTEGER, REAL, CHAR)
+        var_type = self.lexer.token.name
+        self.lexer.eat(var_type)
+        return Declaration(variable, var_type)
+
+    #builds a declaration list
+    def build_declaration_list(self):
+        self.lexer.eat("VAR")
+        decs = [self.build_declaration()]
+        while self.lexer.token.name == SEMICOLON:
+            self.lexer.eat(SEMICOLON)
+            if self.lexer.token.name == BEGIN:
+                break
+            decs.append(self.build_declaration())
+        return DeclarationList(decs)
+
     #builds a program (a compound statement bookended by "BEGIN" and "END")
     def build_program(self):
         if self.lexer.pos == -1:
             self.lexer.next_token()
-            assert(self.lexer.token.name == "PROGRAM")
-            self.lexer.eat("PROGRAM")
-            name = self.build_variable()
-            if self.lexer.token.name == EOF:
-                return Program(EMPTY, {})
-        node = self.build_compoundStatement()
+        assert(self.lexer.token.name == "PROGRAM"), "expected PROGRAM but actual token is " + str(self.lexer.token)
+        self.lexer.eat("PROGRAM")
+        name = self.build_variable()
+        self.lexer.eat(SEMICOLON)
+        if self.lexer.token.name == EOF:
+            return Program(EMPTY, {})
+        decs = self.build_declaration_list()
+        statements = self.build_statementList()
         self.lexer.eat(PERIOD)
-        return Program(node, name)
+        return Program(name, decs, statements)
     
     #builds a compound statement (multiple statements with beginning and end)
     def build_compoundStatement(self):
@@ -150,13 +189,22 @@ class Parser:
             return Statement(self.build_compoundStatement())
         elif self.lexer.token.name in (PERIOD, END, SEMICOLON):
             return Statement(EMPTY)
-        return Statement(self.build_assignmentStatement())
-
+        variable = self.build_variable()
+        if self.lexer.token.name == ASSIGNEQ:
+            self.lexer.eat(ASSIGNEQ)
+            return AssignmentStatement(variable, self.build_expr())
+        assert self.lexer.token.name == OPAREN, "expected function but wrong token found " + str(self.lexer.token)
+        self.lexer.eat(OPAREN)
+        args = [self.build_factor()]
+        while self.lexer.token.name == COMMA:
+            self.lexer.eat(COMMA)
+            args.append(self.build_factor())
+        self.lexer.eat(CPAREN)
+        return Function(variable, args)
+    
     #builds an assignment statement (variable := value)
     def build_assignmentStatement(self):
         variable = self.build_variable()
-        if self.lexer.token.name == SPACE:
-            self.lexer.next_token()
         self.lexer.eat(ASSIGNEQ)
         return AssignmentStatement(variable, self.build_expr())
     

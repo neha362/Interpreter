@@ -1,5 +1,5 @@
-from AST_Node import *
-from declaration import *
+from as_tree.AST_Node import *
+from as_tree.declaration import *
 
 #class DeclarationList stores appropriate functions for a list of declarations
 class DeclarationList(AST_Node):
@@ -22,14 +22,14 @@ class DeclarationList(AST_Node):
         string = ""
         for _ in range(tabs):
             string += tab
-        string += "DECLARATIONS\n"
+        string += "|-> DeclarationList\n"
         for i in self.declarations:
-            string += i.to_string(tabs + 1)
+            string += i.to_string(tabs) + "\n"
         return string
     
     def __str__(self):
         string = "DECLARATION LIST\n"
-        for i in self.statements:
-            string +=  tab + i.__str__() + "\n"
+        for i in self.declarations:
+            string += tab + i.__str__() + "\n"
         return string
     

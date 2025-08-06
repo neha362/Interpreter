@@ -1,7 +1,6 @@
-from term import *
-from binop import *
-from number import *
-from expr import *
+from as_tree.term import *
+from as_tree.binop import *
+from as_tree.expr import *
 
 # class Factor extends the Term Node and implements the interpret method according to the BNF
 class Factor(Term):

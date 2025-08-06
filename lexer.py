@@ -21,14 +21,23 @@ class Lexer:
             self.token = Token(EOF, None)
             return Token(EOF, None)
         curr_char = self.expr[self.pos]
-        
         match curr_char.lower():
             case " ":
-                self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
+                if skip_spaces:
+                    return self.next_token()
+                else:
+                    self.token = Token(SPACE, " ")
             case "\n":
                 self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
             case "\t":
                 self.token = Token(SPACE, " ") if not skip_spaces else self.next_token()
+            case "{":
+                while self.pos < len(self.expr):
+                    self.pos += 1
+                    if self.expr[self.pos] == "}":
+                        return self.next_token()
+                if self.pos == len(self.expr):
+                    raise Exception("unclosed comment")
             case "(":
                 self.token = Token(OPAREN, "(")
             case ")":
@@ -51,19 +60,23 @@ class Lexer:
                 if not self.pos == len(self.expr) - 1 and self.expr[self.pos + 1] == "=":
                     self.token = Token(ASSIGNEQ, ":=")
                     self.pos += 1
+                else:
+                    self.token = Token(COLON, ":")
             case ";":
                 self.token = Token(SEMICOLON, ";")
+            case ",":
+                self.token = Token(COMMA, ",")
+            case "'":
+                self.token = Token(QUOTE, "'")
             case _:
                 if curr_char.isnumeric():
                     self.token = Token(INTEGER, int(curr_char))
-                elif curr_char.isalnum():
+                else:
                     self.token = Token(CHAR, curr_char)
                     for keyword in keywords:
                         if self.pos <= len(self.expr) - len(keyword) and self.expr[self.pos:self.pos + len(keyword)].upper() == keyword:
-                            self.token = Token(keywords[keyword], keyword)
+                            self.token = Token(keyword, keyword)
                             self.pos += len(keyword) - 1
-                else:
-                    raise Exception("illegal symbol encountered:", curr_char)
         if self.token == None:
             raise Exception("token not recognized")
         return self.token

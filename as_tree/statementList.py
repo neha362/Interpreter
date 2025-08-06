@@ -1,4 +1,4 @@
-from statement import *
+from as_tree.statement import *
 
 # class StatementList stores appropriate function for statement lists
 class StatementList(AST_Node):
@@ -24,13 +24,13 @@ class StatementList(AST_Node):
             string = ""
             for _ in range(tabs):
                 string += tab
-            string += "|-> " + type(self).__name__ + " " + (str(self.env) if self.env != None else "")
+            string += "|-> " + type(self).__name__ + " " + (AST_Node.print_env(self.env) if self.env != None else "")
             for i in self.statements:
                 string += "\n" + i.to_string(tabs + 1)
             return string
 
         def __str__(self):
-            string = "STATEMENT LIST " + (str(self.env) if self.env != None else "") + "\n"
+            string = "STATEMENT LIST \n\t" + (AST_Node.print_env(self.env) if self.env != None else "") + "\n"
             for i in self.statements:
                 string +=  tab + i.__str__() + "\n"
             return string

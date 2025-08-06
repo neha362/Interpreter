@@ -1,4 +1,4 @@
-from AST_Node import *
+from as_tree.AST_Node import *
 
 #class Binop stores appropriate functions for binary operations
 class Binop(AST_Node):

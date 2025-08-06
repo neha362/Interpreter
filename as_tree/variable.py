@@ -1,4 +1,4 @@
-from factor import *
+from as_tree.factor import *
 
 #class Variable contains the relevant functions for variables
 class Variable(Factor):
@@ -10,9 +10,10 @@ class Variable(Factor):
     def invariant(self):
         return isinstance(self.id, str)
     
-    def interpret(self, env):
+    def interpret(self, env={}):
         if self.id in env:
-            return env[self.id] * (-1 if self.neg else 1)
+            value, _ = env[self.id]
+            return value * (-1 if self.neg else 1)
         raise Exception("variable not defined: " + self.id)
     
     def to_string(self, tabs=0):

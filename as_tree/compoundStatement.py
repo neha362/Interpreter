@@ -1,5 +1,5 @@
-from AST_Node import *
-from statementList import *
+from as_tree.AST_Node import *
+from as_tree.statementList import *
 
 #class CompoundStatement stores appropriate functions for compound statements
 class CompoundStatement(AST_Node):
@@ -17,11 +17,8 @@ class CompoundStatement(AST_Node):
     def to_string(self, tabs=0):
         if isinstance(self.statements, list):
             string = ""
-            for _ in range(tabs):
-                string += tab
-            string += "|-> " + type(self).__name__ + " " + "\n"
             for i in self.statements:
-                string += "\n" + i.to_string(tabs + 1)
+                string += i.to_string(tabs) + "\n" 
             return string
         string = ""
         for _ in range(tabs):
@@ -30,6 +27,6 @@ class CompoundStatement(AST_Node):
         return string
 
     def __str__(self):
-        return "COMPOUND STATEMENT " + (str(self.env) if self.env != None else "") + "\n" + self.statements.__str__()
+        return "COMPOUND STATEMENT \n\t" + (AST_Node.print_env(self.env) if self.env != None else "") + "\n" + self.statements.__str__()
     
 EMPTY = CompoundStatement([])

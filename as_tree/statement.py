@@ -1,5 +1,4 @@
-from compoundStatement import *
-from assignmentStatement import *
+from as_tree.compoundStatement import *
 
 # class Statement stores appropriate functions for statements
 class Statement(AST_Node):
@@ -18,10 +17,7 @@ class Statement(AST_Node):
     
     def to_string(self, tabs=0):
         string = ""
-        for _ in range(tabs):
-            string += tab
-        
-        string += "|-> " + type(self).__name__ + "\n" + self.statement.to_string(tabs + 1)
+        string += self.statement.to_string(tabs)
         return string
     
     def __str__(self):
