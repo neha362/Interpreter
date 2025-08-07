@@ -5,6 +5,7 @@ VAR
    y          : REAL;
 
 BEGIN {Part10}
+writeln('a =', a);
    BEGIN
       number := 2;
       a := number;

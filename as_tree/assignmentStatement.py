@@ -19,19 +19,7 @@ class AssignmentStatement(Statement):
             value, val_type = check_val_type(value, val_type)
             env[self.variable.id] = value, val_type
             return True, env
-        value = self.expr.interpret(env)
-        if isinstance(value, int):
-            val_type = INTEGER
-        elif isinstance(value, float):
-            val_type = REAL 
-        elif isinstance(value, chr):
-            val_type = CHAR
-        elif isinstance(value, function):
-            val_type = FUNCTION
-        else:
-            raise Exception("unknown type encountered" + type)
-        env[self.variable.id] = value, val_type
-        return True, env
+        raise Exception("variable not in environment")
     
     def to_string(self, tabs=0):
         string = ""

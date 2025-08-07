@@ -11,7 +11,7 @@ class CompoundStatement(AST_Node):
         return isinstance(self.statements, StatementList)
 
     def interpret(self, env):
-        res, self.env = self.statements.interpret(env.copy())
+        res, self.env = self.statements.interpret(env)
         return res, env
 
     def to_string(self, tabs=0):
