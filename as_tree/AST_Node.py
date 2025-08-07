@@ -3,10 +3,9 @@ from interpreter import *
 from tokens import *
 from lexer import *
 
-tab = "  "
-
 #class AST_Node holds the abstract interpret() function, which evaluates the node
 class AST_Node():
+    tab = "  "
     @abstractmethod
     def invariant(self):
         pass

@@ -23,7 +23,7 @@ class StatementList(AST_Node):
         def to_string(self, tabs=0):
             string = ""
             for _ in range(tabs):
-                string += tab
+                string += self.tab
             string += "|-> " + type(self).__name__ + " " + (AST_Node.print_env(self.env) if self.env != None else "")
             for i in self.statements:
                 string += "\n" + i.to_string(tabs + 1)
@@ -32,5 +32,5 @@ class StatementList(AST_Node):
         def __str__(self):
             string = "STATEMENT LIST \n\t" + (AST_Node.print_env(self.env) if self.env != None else "") + "\n"
             for i in self.statements:
-                string +=  tab + i.__str__() + "\n"
+                string +=  self.tab + i.__str__() + "\n"
             return string

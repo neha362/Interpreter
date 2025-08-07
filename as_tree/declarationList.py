@@ -21,7 +21,7 @@ class DeclarationList(AST_Node):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += tab
+            string += self.tab
         string += "|-> DeclarationList\n"
         for i in self.declarations:
             string += i.to_string(tabs) + "\n"
@@ -30,6 +30,6 @@ class DeclarationList(AST_Node):
     def __str__(self):
         string = "DECLARATION LIST\n"
         for i in self.declarations:
-            string += tab + i.__str__() + "\n"
+            string += self.tab + i.__str__() + "\n"
         return string
     

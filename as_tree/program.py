@@ -18,6 +18,7 @@ class Program(AST_Node):
         if not self.invariant():
             raise Exception("invalid program node")
         self.env = self.declarations.interpret(self.env)
+        self.env["writeln"] = (lambda x:print(" ".join([str(i) for i in x])), FUNCTION)
         for i in self.statements.interpret(self.env):
             if not i:
                 return False

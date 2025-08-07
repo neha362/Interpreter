@@ -30,8 +30,6 @@ def file_eval(file):
         my_file = open(file)
         interpreter = Interpreter(my_file.read())
         x = str(interpreter.interpret())
-        print(interpreter.input() + " = " + x)
-        print(interpreter.parser.tree.to_string())
     # except Exception as e:
     #     print(e)
     finally:

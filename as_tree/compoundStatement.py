@@ -22,7 +22,7 @@ class CompoundStatement(AST_Node):
             return string
         string = ""
         for _ in range(tabs):
-            string += tab
+            string += self.tab
         string += "|-> " + type(self).__name__ + " " + (str(self.env) if self.env != None else "") + "\n" + self.statements.to_string(tabs + 1)
         return string
 

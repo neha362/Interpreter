@@ -10,7 +10,7 @@ class Declaration(AST_Node):
         for i in self.vars:
             if not isinstance(i, Variable):
                 return False
-        return self.vars and type in (INTEGER, CHAR, REAL)
+        return self.vars and type in (INTEGER, CHAR, REAL, FUNCTION)
 
     def interpret(self, env):
         for i in self.vars:

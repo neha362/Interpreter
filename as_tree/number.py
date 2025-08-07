@@ -25,7 +25,7 @@ class Number(Factor):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += tab
+            string += self.tab
         return string + "|-> " + type(self).__name__ + ", " + ("-" if self.neg else "") + str([i.symbol for i in self.values])
 
     # prints out the number, as represented by the array of symbols

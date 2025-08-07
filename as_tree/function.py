@@ -2,7 +2,7 @@ from as_tree.variable import *
 from as_tree.factor import *
 
 # the function class stores functions relevant to building functions within the program
-class Function:
+class Function(AST_Node):
     def __init__(self, func_name, args):
         self.func_name = func_name
         self.args = args
@@ -17,20 +17,20 @@ class Function:
     
     def interpret(self, env):
         func = self.func_name.interpret(env)
-        assert isinstance(func, function), "variable is not a function"
-        return func(self.args)
+        assert type(func).__name__ == "function", "variable is not a function, " + type(func).__name__
+        return func([i.interpret(env) for i in self.args]), env
     
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += tab
+            string += self.tab
         string += "|-> Function\n"
         for _ in range(tabs + 1):
-            string += tab
+            string += self.tab
         string += "|-> Name: " + str(self.func_name) + "\n"
         for _ in range(tabs + 1):
-            string += tab
-        string += "|-> Inputs: " + str(self.args) + "\n"
+            string += self.tab
+        string += "|-> Inputs: " + str([str(i) for i in self.args]) + "\n"
         return string
 
     def __str__(self):

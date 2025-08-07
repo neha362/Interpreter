@@ -3,6 +3,7 @@ from as_tree import *
 from as_tree.program import *
 from as_tree.function import *
 from as_tree.number import *
+from as_tree.string import *
 from as_tree.assignmentStatement import *
 from lexer import *
 
@@ -26,7 +27,7 @@ class Parser:
                 name += self.lexer.token.symbol
                 self.lexer.next_token(False)
             self.lexer.eat(QUOTE)
-            return Variable(name)
+            return String(name)
         while self.lexer.token.name in (CHAR, INTEGER):
             assert str.isalnum(str(self.lexer.token.symbol)) or self.lexer.token.symbol in ("-", "_"), "expected valid variable characters but found " + self.lexer.token.symbol
             name += str(self.lexer.token.symbol)

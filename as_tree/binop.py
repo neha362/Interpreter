@@ -11,7 +11,7 @@ class Binop(AST_Node):
     def to_string(self, tabs=0):
         string = ""
         for _ in range(tabs):
-            string += tab
+            string += self.tab
         string += "|-> " + type(self).__name__ + ", op = " + ("" if self.op == None else self.op.symbol)
         string += "\n" + self.left.to_string(tabs + 1)
         if self.right != None:
