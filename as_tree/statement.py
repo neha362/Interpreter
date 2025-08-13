@@ -9,11 +9,11 @@ class Statement(AST_Node):
     def invariant(self):
         return isinstance(self.statement, CompoundStatement) or isinstance(self.statement, AssignmentStatement) or self.statement == EMPTY
     
-    def interpret(self, env):
+    def interpret(self, global_env):
         if self.statement == EMPTY:
-            return True, env
-        res, _ = self.statement.interpret(env)
-        return res, env
+            return True, global_env
+        res, _ = self.statement.interpret(global_env)
+        return res, global_env
     
     def to_string(self, tabs=0):
         string = ""

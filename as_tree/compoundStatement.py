@@ -10,9 +10,9 @@ class CompoundStatement(AST_Node):
     def invariant(self):
         return isinstance(self.statements, StatementList)
 
-    def interpret(self, env):
-        res, self.env = self.statements.interpret(env)
-        return res, env
+    def interpret(self, global_env):
+        res, self.env = self.statements.interpret(global_env)
+        return res, global_env
 
     def to_string(self, tabs=0):
         if isinstance(self.statements, list):

@@ -36,3 +36,4 @@ def file_eval(file):
         my_file.close()
 
 file_eval("part10.txt")
+file_eval("newfile.txt")

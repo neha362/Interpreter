@@ -12,13 +12,14 @@ class AssignmentStatement(Statement):
     def invariant(self):
         return isinstance(self.variable, Variable) and isinstance(self.expr, Expr)
     
-    def interpret(self, env):
-        if self.variable.id in env:
-            value = self.expr.interpret(env)
-            _, val_type = env[self.variable.id]
+    def interpret(self, global_env):
+        if self.variable.id in global_env:
+            value = self.expr.interpret(global_env)
+            _, val_type = global_env[self.variable.id]
             value, val_type = check_val_type(value, val_type)
-            env[self.variable.id] = value, val_type
-            return True, env
+            global_env[self.variable.id] = value, val_type
+            return True, global_env
+        #TODO:add declarations required in scope
         raise Exception("variable not in environment")
     
     def to_string(self, tabs=0):
